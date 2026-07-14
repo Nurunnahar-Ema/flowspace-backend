@@ -13,10 +13,10 @@ const app = new Hono<{ Bindings: Env }>();
 
 // সিকিউরিটির জন্য ফ্রন্টএন্ড পোর্ট নির্দিষ্ট করে দিতে পারেন
 app.use("/*", cors({
-  origin: "http://localhost:5173",
-  allowMethods: ["POST", "GET", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization"],
-  exposeHeaders: ["ETag"], // ফ্রন্টএন্ডের ETag রিড করার জন্য এটি আবশ্যক
+  origin: "*",
+  allowMethods: ["POST", "GET", "OPTIONS", "PUT"],
+  allowHeaders: ["Content-Type", "Authorization", "x-amz-date", "x-amz-content-sha256"],
+  exposeHeaders: ["ETag"],
 }));
 
 const getAwsClient = (env: Env) =>
@@ -60,22 +60,32 @@ app.post("/api/upload/start", async (c) => {
 });
 
 app.post("/api/upload/get-part-url", async (c) => {
-  const { key, uploadId, partNumber } = await c.req.json();
+  const { key, uploadId, partNumber, contentLength } = await c.req.json();
 
   const aws = getAwsClient(c.env);
   const partUrl = `${c.env.STORAGE_ENDPOINT}/${c.env.STORAGE_BUCKET}/${key}?uploadId=${uploadId}&partNumber=${partNumber}`;
 
-  // Signed request তৈরি করো
+  // এই 3 টা header sign করা বাধ্যতামূলক
+  const headersToSign = {
+    "content-length": contentLength.toString(),
+    "x-amz-content-sha256": "UNSIGNED-PAYLOAD", // body hash skip করলাম
+    "host": new URL(partUrl).host // host ও sign করতে হবে
+  };
+
   const signedRequest = await aws.sign(partUrl, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/octet-stream"
-    }
+    headers: headersToSign
   });
 
+  // signedRequest.headers থেকে দরকারি গুলো বের করো
   return c.json({
-    url: signedRequest.url,
-    headers: signedRequest.headers   // ফ্রন্টএন্ডে পাঠাও
+    url: partUrl, // unsigned URL পাঠাবো
+    headers: {
+      "Authorization": signedRequest.headers.get("authorization"),
+      "x-amz-date": signedRequest.headers.get("x-amz-date"),
+      "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+      "Content-Length": contentLength.toString()
+    }
   });
 });
 
@@ -118,5 +128,22 @@ app.post("/api/upload/complete", async (c) => {
   } catch (err: any) {
     return c.json({ error: "Upload complete error", details: err.message }, 500);
   }
+});
+
+
+
+app.post("/api/upload/get-download-url", async (c) => {
+  const { key } = await c.req.json();
+
+  const aws = getAwsClient(c.env);
+  const fileUrl = `${c.env.STORAGE_ENDPOINT}/${c.env.STORAGE_BUCKET}/${key}`;
+
+  // presign method ইউজ করো
+  const signed = await aws.sign(fileUrl, {
+    method: "GET",
+    aws: { signQuery: true, expiresIn: 3600 } // query param এ signature যাবে
+  });
+
+  return c.json({ url: signed.url });
 });
 export default app;
