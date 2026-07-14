@@ -2,13 +2,23 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "flowspace-backend",
   "main": "src/index.ts",
-  "compatibility_date": "2026-07-13"
+  "compatibility_date": "2026-07-13",
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
+  "vars": {
+    "STORAGE_ENDPOINT": "https://bkcsykkrcingzlhqcgll.storage.supabase.co/storage/v1/s3",
+    "STORAGE_ACCESS_KEY": "1d36e54996184e66ade1c01f5a51448c",
+    "STORAGE_SECRET_KEY": "fa81d109723128a307c0043031908b40dc7da6a30b2d22eba19e36afe88678ae",
+    "STORAGE_BUCKET": "flowspace",
+  },
+  "hyperdrive": [
+    {
+      "binding": "saas-hyper",
+      "id": "9c62b26596e246f9951b894ec23bba76",
+      "localConnectionString": "postgresql://postgres:gsjfaAS9*+-_@db.bkcsykkrcingzlhqcgll.supabase.co:5432/postgres"
+    }
+  ],
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",
