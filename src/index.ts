@@ -1,12 +1,19 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { AwsClient } from "aws4fetch";
+import { userlogin } from "./User/auth";
+import { getDb } from "./Models";
+import { getStorageItems } from "./User/storageview";
+import { adminSession } from "./User/auth";
+import { getFileUrl } from "./component/getfileurl";
+import { viewFile } from "./component/viewfile";
 
 interface Env {
   STORAGE_ENDPOINT: string;        // Supabase বা R2 endpoint
   STORAGE_ACCESS_KEY: string;      // Access Key
   STORAGE_SECRET_KEY: string;      // Secret Key
   STORAGE_BUCKET: string;          // Bucket name
+  "saas-hyper": { connectionString: string }; // Database connection string
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -19,7 +26,7 @@ app.use("/*", cors({
   exposeHeaders: ["ETag"],
 }));
 
-const getAwsClient = (env: Env) =>
+export const getAwsClient = (env: Env) =>
   new AwsClient({
     accessKeyId: env.STORAGE_ACCESS_KEY,
     secretAccessKey: env.STORAGE_SECRET_KEY,
@@ -132,18 +139,13 @@ app.post("/api/upload/complete", async (c) => {
 
 
 
-app.post("/api/upload/get-download-url", async (c) => {
-  const { key } = await c.req.json();
+app.post("/api/upload/get-download-url",)
+app.get("/api/storage",getStorageItems)
+app.post("/api/storage/get/:id", getFileUrl);
+app.get("/api/storage/view", viewFile);
 
-  const aws = getAwsClient(c.env);
-  const fileUrl = `${c.env.STORAGE_ENDPOINT}/${c.env.STORAGE_BUCKET}/${key}`;
 
-  // presign method ইউজ করো
-  const signed = await aws.sign(fileUrl, {
-    method: "GET",
-    aws: { signQuery: true, expiresIn: 3600 } // query param এ signature যাবে
-  });
 
-  return c.json({ url: signed.url });
-});
+app.post("/api/auth/user/login", userlogin);
+
 export default app;

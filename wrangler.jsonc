@@ -3,14 +3,15 @@
   "name": "flowspace-backend",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-13",
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "vars": {
     "STORAGE_ENDPOINT": "https://bkcsykkrcingzlhqcgll.storage.supabase.co/storage/v1/s3",
     "STORAGE_ACCESS_KEY": "1d36e54996184e66ade1c01f5a51448c",
     "STORAGE_SECRET_KEY": "fa81d109723128a307c0043031908b40dc7da6a30b2d22eba19e36afe88678ae",
     "STORAGE_BUCKET": "flowspace",
+    "JWT_SECRET": "your_jwt_secret_key_here"
   },
   "hyperdrive": [
     {
@@ -19,12 +20,12 @@
       "localConnectionString": "postgresql://postgres:gsjfaAS9*+-_@db.bkcsykkrcingzlhqcgll.supabase.co:5432/postgres"
     }
   ],
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
+  "kv_namespaces": [
+    {
+      "binding": "FLOWSPACE_USER_AUTH",
+      "id": "0a617608e5074c4c8a52fa1eb96b2b2d"
+    }
+  ],
   // "r2_buckets": [
   //   {
   //     "binding": "MY_BUCKET",
